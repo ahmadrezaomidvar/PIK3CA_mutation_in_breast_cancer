@@ -14,7 +14,7 @@ from torch.utils.data import Dataset, DataLoader
 # Dataset
 class DataFeatures(Dataset):
     
-    def __init__(self, root):
+    def __init__(self, root: str) -> None:
         super(DataFeatures, self).__init__()
         
         # parameters
@@ -28,7 +28,7 @@ class DataFeatures(Dataset):
         self.X_train_df, self.y_train_df, self.centers_train_df, self.patients_train_df = self.make_train()    
 
 
-    def make_train(self):
+    def make_train(self) -> tuple:
 
         self.df_train = self.df_train.merge(self.y_train, on='Sample ID')
         X_train = []
@@ -56,10 +56,10 @@ class DataFeatures(Dataset):
 
         return X_train, y_train, centers_train, patients_train
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.n_samples
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> tuple:
 
         X_train = torch.from_numpy(self.X_train_df[index]).float().permute(1, 0)
         y_train = torch.Tensor([self.y_train_df[index]]).long()
@@ -68,7 +68,7 @@ class DataFeatures(Dataset):
 
         return (X_train, y_train, centers_train, patients_train)
 
-    def __getdata__(self):
+    def __getdata__(self) -> tuple:
 
         X_train = torch.from_numpy(self.X_train_df).float().permute(0, 2, 1)
         y_train = torch.from_numpy(self.y_train_df).long()
