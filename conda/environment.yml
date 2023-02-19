@@ -1,0 +1,20 @@
+# ========================================================
+# Core dependencies
+# ========================================================
+channels:
+  - pytorch
+  - conda-forge
+
+dependencies:
+  - python>=3.9,<3.10
+
+  # Open source packages
+  - pandas=1.4.*
+  - pytorch=1.11.*
+  - scikit-learn=1.0.*
+  - torchvision=0.12.*
+  - tqdm=4.64.*
+  - numpy=1.21.*
+  - pyyaml=6.0.*
+  - pip
+  - pip:

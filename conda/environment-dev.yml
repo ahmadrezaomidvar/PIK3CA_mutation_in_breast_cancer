@@ -1,0 +1,16 @@
+# ========================================================
+# Development dependencies
+# ========================================================
+channels:
+  - conda-forge
+dependencies:
+  # Tests
+  - pytest>=6.2.5
+  - coverage[toml]>=6.4
+  # Linting
+  - black>=22.0.0
+  - pip
+  # nox
+  - nox
+  - ruamel.yaml
+  - pip:
