@@ -1,60 +1,14 @@
-# model configuration can be configured here
+# Configuration file for the training and prediction of the model
 
-# # common parameters
-# db: 'clothes_attr_class'
-# data_type: 'fine'                                                                # 'main' for all images and 'sample' for 10% of the images and 'fine' for 30K images with 26 category
-# image_type: 'cropped'                                                               # 'cropped' or 'original'
-# num_classes : 26                                                                     # number of classes. 26 no for "fine" data_type and 1000 no for "main" and "sample"
-# img_size : 224
-# img_form : 'jpg'
-
-
-# # train parameters
-# batch_size_train : 32
-# batch_size_val : 16
-# batch_size_test : 16                                                     
-
-root : "/Users/rezachi/ML/datasets/owkin/data/"
-J: 1                                                # No. Embedding Kernels  
-R: 2                                                # No. Retained features  1 <= R <= Features_dim
-n_first_mlp_neurons: 200                            # No. of neurons in the first layer of the MLP
-n_second_mlp_neurons: 100                           # No. of neurons in the second layer of the MLP
-
-
-# path_to_save_model : "/data/shared/checkpoint/clothes_attr"
-# resume : False
-# resume_path : "/data/shared/checkpoint/clothes_attr/clothes_attr_class_resnet152/data-fine_epoch-11_Hamming_Loss-0.078.pth"                                            
-
-
-# finetune: False              # Option to finetune model with small dataset. Not applicable if resume: True
-# finetune_path: "/data/shared/checkpoint/clothes_attr/clothes_attr_class_resnet152/data-fine_epoch-11_Hamming_Loss-0.078.pth"                                      
-# finetune_trainable_layers: 2
-
-# num_epochs : 12
-# model_name : 'resnet152'
-# all_layers: True            # Option to train all parameters: 'True' or freezing all except final layers: 'False'. Not applicable if finetune: True
-# lr : 0.01
-# momentum : 0.9
-# weight_decay : 0.0001
-# num_workers : 0
-# print_freq : 10
-# lr_step_size: 5
-# lr_gamma: 0.3
-# seed: 1221
-# threshold: 0.5
-# eval_metric: 'Hamming_Loss'    # 'MR', 'Hamming_Loss', 'F1_Score'
-
-# # prediction parameters
-# checkpoint_path: "/data/shared/checkpoint/clothes_attr/clothes_attr_class_resnet152/data-fine_epoch-11_Hamming_Loss-0.078.pth"                    
-
-# class_map_path: '/data/shared/DeepFashion/Category and Attribute Prediction Benchmark/class_map_clothes_attr_class_fine.json'
-
-# pred_root: "/home/reza/Dropbox/batman/tmp/prediction_data"
-# model_type: 'fine'                # 'coarse' or 'fine'
-# pred_batch_size : 4
-# pred_img_format: 'jpg'
-# pred_num_workers : 0
-# pred_model_name : 'resnet152' 
-# mean : [0.485, 0.456, 0.406]
-# std : [0.229, 0.224, 0.225]
-# pred_threshold: 0.5
+root : "/Users/rezachi/ML/datasets/owkin/data"
+J: 1                                                      # No. Embedding Kernels  
+R: 2                                                      # No. Retained features  1 <= R <= Features_dim
+n_first_mlp_neurons: 200                                  # No. of neurons in the first layer of the MLP
+n_second_mlp_neurons: 100                                 # No. of neurons in the second layer of the MLP
+features_dim: 2048                                        # No. of features in the embedding
+seed: 1221                                                # Seed for the random number generator
+n_splits: 2                                               # No. of splits for cross validation
+batch_size: 4                                             # Batch size
+lr: 0.01                                                  # Learning rate
+num_epochs: 1                                             # No. of epochs
+checkpoint_name: "2023-02-18_23-59-58_best_models.pth"    # Path to save the best model

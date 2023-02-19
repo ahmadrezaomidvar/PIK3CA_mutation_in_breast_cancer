@@ -45,24 +45,3 @@ class MinMaxModule(nn.Module):
         output,_ = torch.sort(output, dim=2, descending=True)
 
         return output
-
-## TO DO
-#
-#
-
-if __name__ == '__main__':
-    
-
-    model = Chowder(2048, J=1, R=2, n_first_mlp_neurons=200, n_second_mlp_neurons=100)
-
-    from dataset import DataFeatures
-    root = "/Users/rezachi/ML/datasets/owkin/data/"
-    data = DataFeatures(root)
-    X_train, y_train, centers_train, patients_train = data.__getdata__()
-
-    x = model(X_train)
-    print(x.shape)
-    print(x[54])
-
-    print('\n    Total params: %.2f No' % (sum(p.numel() for p in model.parameters())))
-    print('    Total trainable params: %.0f No' % (sum(p.numel() for p in model.parameters() if p.requires_grad)))
