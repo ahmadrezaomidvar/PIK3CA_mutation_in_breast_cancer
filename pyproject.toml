@@ -1,0 +1,30 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools>=61"]
+
+[project]
+authors = [{ name = "Reza Omidvar" }]
+version = "0.1.0"
+name = "chowder"
+readme = "README.md"
+description = "CHOWDER"
+keywords = ["chowder"]
+requires-python = ">=3.8"
+
+[tool.setuptools.packages.find]
+include = ["chowder*"]
+exclude = ["tests*"]
+
+[tool.coverage.paths]
+source = ["chowder", "*/site-packages"]
+tests = ["tests", "*/tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["chowder"]
+omit = ["*__init__*"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 100
+

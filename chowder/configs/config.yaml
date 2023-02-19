@@ -1,7 +1,7 @@
 # Configuration file for the training and prediction of the model
 
-root : "/Users/rezachi/ML/datasets/owkin/data"
-J: 1                                                      # No. Embedding Kernels  
+root : "/Users/rezachi/ML/datasets/owkin/data"            # Path to the root directory of the dataset
+J: 1                                                      # No. Embedding channels  
 R: 2                                                      # No. Retained features  1 <= R <= Features_dim
 n_first_mlp_neurons: 200                                  # No. of neurons in the first layer of the MLP
 n_second_mlp_neurons: 100                                 # No. of neurons in the second layer of the MLP
@@ -9,6 +9,6 @@ features_dim: 2048                                        # No. of features in t
 seed: 1221                                                # Seed for the random number generator
 n_splits: 2                                               # No. of splits for cross validation
 batch_size: 4                                             # Batch size
-lr: 0.01                                                  # Learning rate
-num_epochs: 1                                             # No. of epochs
+lr: 0.001                                                 # Learning rate
+num_epochs: 2                                             # No. of epochs
 checkpoint_name: "2023-02-18_23-59-58_best_models.pth"    # Path to save the best model
