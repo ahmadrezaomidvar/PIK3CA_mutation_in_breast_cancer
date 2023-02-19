@@ -17,9 +17,19 @@ update: _update_core _update_dev
 # Update the core development dependencies from environment.yml
 update_core: _update_core
 
-test:
+# Train the model
+train:
+	python chowder/train.py
+
+# Predict the test data
+predict:
+	python chowder/predict.py
+
+# Run the integration and unit tests andd calculate the coverage
+test_and_coverage:
 	coverage run -m pytest tests/unit tests/integration
 	coverage report
+	
 # Install core dependencies from the conda/environment.yml file
 _install_core:
 	mamba env create -n $(ENV_NAME) -f $(CORE_DEPS)
@@ -36,10 +46,3 @@ _update_dev:
 _install_package_editable:
 	mamba run -n $(ENV_NAME) pip install --no-deps -e .
 
-# Train the model
-train:
-	python chowder/train.py
-
-# Predict the test data
-predict:
-	python chowder/predict.py

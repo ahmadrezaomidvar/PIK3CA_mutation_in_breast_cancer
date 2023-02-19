@@ -1,23 +1,30 @@
+"""This module contains the training and evaluation functions for the model."""
+
 import math
-import sys
+import logging
 import torch
 from torch import nn
+from torch.utils.data import DataLoader
+from typing import Tuple
 
 from chowder.utils.utils import MetricLogger, SmoothedValue
 from sklearn.metrics import roc_auc_score
 
+logging.basicConfig()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
 
 def train_one_epoch(
-    model,
-    criterion,
-    optimizer,
-    data_loader,
-    device,
-    epoch,
-    print_freq=10,
-    log_dir=".",
-    counter=0,
-):  # , _run = None):
+    model: nn.Module,
+    criterion: nn.Module,
+    optimizer: torch.optim.Optimizer,
+    data_loader: DataLoader,
+    device: torch.device,
+    epoch: int,
+    print_freq: int = 10,
+    counter: int = 0,
+) -> Tuple[MetricLogger, int]:
     """
     The function trains the model for one epoch
 
@@ -29,7 +36,6 @@ def train_one_epoch(
       device: the device to train on.
       epoch: The current epoch number.
       print_freq: How often to print the loss. Defaults to 10
-      log_dir: The directory to save the logs to. Defaults to .
       counter: This is a counter that keeps track of the number of batches that have been trained.
     Defaults to 0
 
@@ -53,16 +59,21 @@ def train_one_epoch(
         optimizer.step()
 
         if not math.isfinite(loss):
-            print("Loss is {}, stopping training".format(loss))
-            print(loss)
-            sys.exit(1)
+            raise ValueError("Loss is {loss}, stopping training")
 
         metric_logger.update(loss=loss.item(), lr=optimizer.param_groups[0]["lr"])
 
     return metric_logger, counter
 
 
-def evaluate(model, criterion, data_loader, device, epoch, print_freq=10, log_dir="."):
+def evaluate(
+    model: nn.modules,
+    criterion: nn.modules,
+    data_loader: DataLoader,
+    device: torch.device,
+    epoch: int,
+    print_freq: int = 10,
+) -> float:
     """
     The function evaluates the model on the validation set.
 
@@ -84,11 +95,12 @@ def evaluate(model, criterion, data_loader, device, epoch, print_freq=10, log_di
 
     with torch.no_grad():
         for x, y in metric_logger.log_every(data_loader, print_freq, header):
-            x = x.to(device, non_blocking=True)
-            y = y.to(device, non_blocking=True)
+            x = x.to(device)
+            y = y.to(device)
             output = model(x)
             loss = criterion(output, y)
             output_proba = nn.Softmax(dim=1)(output)
+            # as the entire dataset is loaded into memory for evaluation, we can calculate the AUC TODO add support for large datasets
             auc = roc_auc_score(y.cpu().numpy(), output_proba[:, 1].cpu().numpy())
             metric_logger.update(loss=loss.item())
             metric_logger.meters["auc"].update(auc.item())

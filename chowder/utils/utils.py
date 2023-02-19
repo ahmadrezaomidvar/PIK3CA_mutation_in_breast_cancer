@@ -1,3 +1,5 @@
+"""Utility functions for training and evaluating models."""
+
 import torch
 from collections import defaultdict, deque
 import datetime
@@ -5,8 +7,16 @@ import time
 import torch
 import torch.distributed as dist
 import logging
-from pathlib import Path
 import time
+from chowder.model import Chowder
+from chowder.dataset import PIK3CAData
+from typing import Dict, Tuple, Optional
+from torch import nn
+from torch.utils.data import DataLoader
+
+logging.basicConfig()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 class SmoothedValue(object):
@@ -31,8 +41,8 @@ class SmoothedValue(object):
         """
         Warning: does not synchronize the deque!
         """
-        if not is_dist_avail_and_initialized():
-            return
+        # if not is_dist_avail_and_initialized():
+        #     return
         t = torch.tensor([self.count, self.total], dtype=torch.float64, device="cuda")
         dist.barrier()
         dist.all_reduce(t)
@@ -176,12 +186,12 @@ class MetricLogger(object):
         print("{} Total time: {}".format(header, total_time_str))
 
 
-def is_dist_avail_and_initialized():
-    if not dist.is_available():
-        return False
-    if not dist.is_initialized():
-        return False
-    return True
+# def is_dist_avail_and_initialized():
+#     if not dist.is_available():
+#         return False
+#     if not dist.is_initialized():
+#         return False
+#     return True
 
 
 def get_device() -> torch.device:
@@ -192,86 +202,116 @@ def get_device() -> torch.device:
       A torch.device object.
     """
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    print(f"\nDevice is on {device} . . .\n")
+    logger.info(f"\nDevice is on {device} . . .\n")
 
     return device
 
 
-class Logger(object):
+def make_model(config: Dict) -> nn.Module:
     """
-    logger preparation
+    The function to make the model.
 
+    Args:
+      config: Dict
 
-    Parameters
-    ----------
-    log_dir: string
-        path to the log directory
-
-    logging_level: string
-        required Level of logging. INFO, WARNING or ERROR can be selected. Default to 'INFO'
-
-    console_logger: bool
-        flag if console_logger is required. Default to False
-
-    Returns
-    ----------
-    logger: logging.Logger
-        logger object
+    Returns:
+      The model is being returned.
     """
+    model = Chowder(
+        features_dim=config["features_dim"],
+        n_kernels=config["n_kernels"],
+        quantiles=config["quantiles"],
+        retained_features=config["retained_features"],
+        n_first_mlp_neurons=config["n_first_mlp_neurons"],
+        n_second_mlp_neurons=config["n_second_mlp_neurons"],
+        reduce_method=config["reduce_method"],
+    )
+    return model
 
-    def __init__(
-        self, log_dir, logging_level="INFO", console_logger=True, multi_module=True
-    ) -> None:
-        super().__init__()
-        self._log_dir = log_dir
-        self.console_logger = console_logger
-        self.logging_level = logging_level.lower()
-        self.multi_module = multi_module
-        self._make_level()
 
-    def _make_level(self):
-        if self.logging_level == "info":
-            self._level = logging.INFO
-        elif self.logging_level == "warning":
-            self._level = logging.WARNING
-        elif self.logging_level == "error":
-            self._level = logging.ERROR
-        else:
-            raise ValueError(
-                "logging_level not specified correctly. INFO, WARNING or ERROR must be chosen"
-            )
+def make_loss() -> nn.Module:
+    """
+    The function to make the loss function.
 
-    def make_logger(self):
-        # logging configuration
-        log_dir = Path(self._log_dir)
-        log_dir.mkdir(parents=True, exist_ok=True)
-        file_name = log_dir.joinpath(f'{time.strftime("%Y%m%d")}.log')
+    Returns:
+      A CrossEntropyLoss object.
+    """
+    return nn.CrossEntropyLoss(reduction="mean")
 
-        # Create a custom logger
-        if self.multi_module:
-            logger = logging.getLogger()
-        else:
-            logger = logging.getLogger(__name__)
-        logger.setLevel(self._level)
 
-        # Create handlers
-        f_handler = logging.FileHandler(filename=file_name)
-        f_handler.setLevel(self._level)
+def make_optimizer(model: nn.Module, lr: float) -> torch.optim.Optimizer:
+    """
+    > The function to make the optimizer.
 
-        # Create formatters
-        format = logging.Formatter(
-            "%(name)s - %(asctime)s - %(levelname)s - %(message)s"
+    Args:
+        model: The model.
+        lr: The learning rate.
+
+    Returns:
+        The optimizer
+    """
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+
+    return optimizer
+
+
+def make_dataset(
+    config: Dict, type: str, generation_fold: Optional[Tuple] = None
+) -> Tuple[DataLoader, DataLoader]:
+    """
+    This function takes in a tuple of training and validation data, and returns a tuple of
+    training and validation dataloaders
+
+    Args:
+
+      config: Dict
+      type: The type of dataset to be created. Either "train" or "test".
+      generation_fold: Tuple of training and validation data. Only required for training.
+
+    Returns:
+        A tuple of training and validation dataloaders for training, and a test dataloader for testing.
+    """
+    if type == "train":
+        if not generation_fold:
+            raise ValueError("generation_fold must be provided for training")
+        train_x, train_y, validation_x, validation_y = generation_fold
+
+        train_dataset = PIK3CAData(
+            sample_ids=train_x, targets=train_y, root=config["root"], type="train"
         )
-        f_handler.setFormatter(format)
+        train_loader = DataLoader(
+            train_dataset,
+            batch_size=config["batch_size"],
+            shuffle=True,
+            num_workers=4,
+        )
 
-        # Add handlers to the logger
-        logger.addHandler(f_handler)
+        validation_dataset = PIK3CAData(
+            sample_ids=validation_x,
+            targets=validation_y,
+            root=config["root"],
+            type="train",
+        )
+        # batch size is the entire validation set for validation to calculate auc score over the entire set
+        validation_loader = DataLoader(
+            validation_dataset,
+            batch_size=validation_dataset.__len__(),
+            shuffle=True,
+            num_workers=4,
+        )
 
-        # Console handler creation
-        if self.console_logger:
-            c_handler = logging.StreamHandler()
-            c_handler.setLevel(self._level)
-            c_handler.setFormatter(format)
-            logger.addHandler(c_handler)
+        return train_loader, validation_loader
 
-        return logger
+    elif type == "test":
+        test_dataset = PIK3CAData(
+            sample_ids=None, targets=None, root=config["root"], type="test"
+        )
+        # batch size is the entire test set for testing to calculate auc score over the entire set
+        test_loader = DataLoader(
+            test_dataset,
+            batch_size=test_dataset.__len__(),
+            shuffle=False,
+            num_workers=4,
+        )
+
+        return test_loader
