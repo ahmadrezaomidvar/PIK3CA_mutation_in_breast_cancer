@@ -1,4 +1,7 @@
+"""Test the integration of the package."""
+
 from chowder.train import k_fold_train as train_main
+from chowder.constant import PACKAGE_ROOT_PATH
 
 
 class TestIntegrationTrain:
@@ -10,10 +13,13 @@ class TestIntegrationTrain:
         """
         Setup the config for the test
         """
+        root = PACKAGE_ROOT_PATH.parent / "data"
         self.config = {
-            "root": "/Users/rezachi/ML/datasets/owkin/data",
-            "J": 1,
-            "R": 2,
+            "root": str(root),
+            "reduce_method": "minmax",
+            "n_kernels": 1,
+            "retained_features": 2,
+            "quantiles": [0.25, 0.75],
             "n_first_mlp_neurons": 200,
             "n_second_mlp_neurons": 100,
             "features_dim": 2048,

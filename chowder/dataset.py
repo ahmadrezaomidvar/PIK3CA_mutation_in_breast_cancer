@@ -1,3 +1,5 @@
+"""The dataset module for the PIK3CA dataset."""
+
 import pandas as pd
 import numpy as np
 from typing import Generator, Tuple, cast
@@ -32,8 +34,8 @@ def get_train_validation_folds(
     validation folds
 
     Args:
-      root (str): the path to the root of the data directory
-      n_splits (int): number of folds
+      root : the path to the root of the data directory
+      n_splits : number of folds
     """
     train_metadata = pd.read_csv(f"{root}/supplementary_data/train_metadata.csv")
     train_outputs = pd.read_csv(f"{root}/train_output.csv")
@@ -69,23 +71,39 @@ def get_train_validation_folds(
 class PIK3CAData(Dataset):
     """The PIK3CA dataset for training and validation."""
 
-    def __init__(self, sample_ids: NDArray, targets: NDArray, root: str) -> None:
+    def __init__(
+        self, sample_ids: NDArray, targets: NDArray, root: str, type: str
+    ) -> None:
         """
         Initialize the dataset
 
         Args:
-          sample_ids (NDArray): a list of sample ids (strings)
-          targets (NDArray): The targets for the dataset.
-          root (str): the path to the root directory of the dataset
+          sample_ids: a list of sample ids (strings)
+          targets: The targets for the dataset.
+          root: the path to the root directory of the dataset
+          type: the type of the dataset. Either train or test
+
+        Raises:
+          ValueError: If the type is not train or test
         """
         super().__init__()
+        self.type = type
+        self.path_to_data = f"{root}/{self.type}_input/moco_features"
 
-        self.sample_ids = sample_ids
-        self.targets = targets
-        self.path_to_data = f"{root}/train_input/moco_features"
-        assert len(self.sample_ids) == len(
-            self.targets
-        ), "sample_ids and targets must have the same length"
+        if self.type == "train":
+            self.sample_ids = sample_ids
+            self.targets = targets
+            assert len(self.sample_ids) == len(
+                self.targets
+            ), "sample_ids and targets must have the same length"
+
+        elif self.type == "test":
+            test_metadata = pd.read_csv(f"{root}/supplementary_data/test_metadata.csv")
+            test_x = test_metadata["Sample ID"].values
+            self.sample_ids = cast(NDArray, test_x)
+
+        else:
+            raise ValueError(f"Invalid type: {self.type}")
 
     def __len__(self):
         return len(self.sample_ids)
@@ -95,7 +113,7 @@ class PIK3CAData(Dataset):
         The method takes in an index, and returns a tuple of the data and the label
 
         Args:
-          index (int): the index of the sample to be retrieved
+          index: the index of the sample to be retrieved
 
         Returns:
           The x is the data and the y is the target.
@@ -103,46 +121,9 @@ class PIK3CAData(Dataset):
 
         x = np.load(f"{self.path_to_data}/{self.sample_ids[index]}")
         x = np.swapaxes(x[:, 3:], 0, 1)
-        y = self.targets[index]
+        if self.type == "train":
+            y = self.targets[index]
+            return x, y
 
-        return x, y
-
-
-class PIK3CAData_test(Dataset):
-    """The PIK3CA dataset for testing."""
-
-    def __init__(self, root: str) -> None:
-        """
-        The function takes in the root directory of the data and then reads in the test metadata file.
-        It then extracts the sample IDs from the metadata file and stores them in the sample_ids
-        variable.
-
-        Args:
-          root (str): the path to the root directory of the project
-        """
-        super().__init__()
-
-        self.path_to_data = f"{root}/test_input/moco_features"
-        test_metadata = pd.read_csv(f"{root}/supplementary_data/test_metadata.csv")
-        test_x = test_metadata["Sample ID"].values
-        self.sample_ids = cast(NDArray, test_x)
-
-    def __len__(self):
-        return len(self.sample_ids)
-
-    def __getitem__(self, index: int) -> Tuple[NDArray, str]:
-        """
-        This function takes in an index and returns a tuple of the data and the id of the data
-
-        Args:
-          index (int): the index of the sample to be retrieved
-
-        Returns:
-          The return is a tuple of the data and the id of the data.
-        """
-
-        test_id = self.sample_ids[index]
-        x = np.load(f"{self.path_to_data}/{test_id}")
-        x = np.swapaxes(x[:, 3:], 0, 1)
-
-        return x, test_id
+        else:
+            return x, self.sample_ids[index]
