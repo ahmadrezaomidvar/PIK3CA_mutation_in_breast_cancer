@@ -1,6 +1,7 @@
 """Train the model."""
 
 import torch
+import torch.nn as nn
 from chowder.utils.engine import train_one_epoch, evaluate
 import yaml
 from chowder.utils.utils import (
@@ -30,7 +31,7 @@ logger.setLevel(logging.INFO)
 class Trainer(object):
     """Trainer class for training the model."""
 
-    def __init__(self, config: Dict, generation_fold: Tuple) -> None:
+    def __init__(self, config: Dict, generation_fold: Tuple, model: nn.Module) -> None:
         """
         Initialize the trainer class.
         The function takes in a dictionary of configuration parameters and a tuple of training and
@@ -43,7 +44,7 @@ class Trainer(object):
         super().__init__()
         self.config = config
         self.device = get_device()
-        self.model = make_model(config=self.config).to(self.device)
+        self.model = model.to(self.device)
         self.optimizer = make_optimizer(self.model, lr=self.config["lr"])
         self.loss = make_loss()
         self.data_loader_train, self.data_loader_val = make_dataset(
@@ -76,6 +77,7 @@ class Trainer(object):
                 self.device,
                 epoch,
                 counter=counter,
+                l2_reg=self.config["l2_reg"],
             )
             logger.info(
                 f'Epoch: {epoch} Train Loss: {metric_logger.meters["loss"].global_avg:.4f}'
@@ -113,23 +115,30 @@ def k_fold_train(config: Dict) -> None:
     root = config["root"]
     num_epochs = config["num_epochs"]
     n_splits = config["n_splits"]
+    n_ensemble = config["n_ensemble"]
     best_models: List[Dict] = []
     best_aucs: List[float] = []
-    train_validation_generator = get_train_validation_folds(
+    
+    for j in range(n_ensemble):
+        logger.info(f"Ensemble {j+1} of {n_ensemble}")
+        train_validation_generator = get_train_validation_folds(
         root=root, n_splits=n_splits
     )
-    for i, dataset in enumerate(train_validation_generator):
-        logger.info(f"Fold {i+1} of {n_splits}")
-        trainer = Trainer(config, dataset)
-        best_model, best_auc = trainer.train(num_epochs=num_epochs)
-        best_models.append(best_model)
-        best_aucs.append(best_auc)
+        for i, dataset in enumerate(train_validation_generator):
+            torch.manual_seed(j)
+            logger.info(f"Fold {i+1} of {n_splits}")
+            model = make_model(config=config)
+            print(model.embedding_layer.weight[0])
+            trainer = Trainer(config, dataset, model)
+            best_model, best_auc = trainer.train(num_epochs=num_epochs)
+            best_models.append(best_model)
+            best_aucs.append(best_auc)
 
     to_save = Path(root) / "checkpoints"
     to_save.mkdir(parents=True, exist_ok=True)
     torch.save(
         best_models,
-        to_save / f'{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}_best_models.pth',
+        to_save / f'{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}_best_models_{config["reduce_method"]}.pth',
     )
     torch.save(
         best_aucs,

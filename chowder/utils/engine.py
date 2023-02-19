@@ -24,6 +24,7 @@ def train_one_epoch(
     epoch: int,
     print_freq: int = 10,
     counter: int = 0,
+    l2_reg: float = 0.0,
 ) -> Tuple[MetricLogger, int]:
     """
     The function trains the model for one epoch
@@ -37,6 +38,7 @@ def train_one_epoch(
       epoch: The current epoch number.
       print_freq: How often to print the loss. Defaults to 10
       counter: This is a counter that keeps track of the number of batches that have been trained.
+      l2_reg: The L2 regularization parameter. Defaults to 0
     Defaults to 0
 
     Returns:
@@ -55,6 +57,13 @@ def train_one_epoch(
         optimizer.zero_grad()
         logits = model(x)
         loss = criterion(logits, y)
+
+        # Add L2 regularization to the embedding layer as described in the paper
+        l2_regularisation = torch.tensor(0.0).to(device)
+        embedding_weight = model.embedding_layer.weight
+        l2_regularisation += torch.linalg.norm(embedding_weight, ord=2)
+        loss += l2_reg * l2_regularisation
+
         loss.backward()
         optimizer.step()
 

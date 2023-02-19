@@ -2,15 +2,18 @@
 
 root : "/Users/rezachi/ML/datasets/owkin/data"            # Path to the root directory of the dataset
 reduce_method: "minmax"                                   # Method for reducing the embedding, can be "minmax" or "quantile"
-n_kernels: 1                                              # No. Embedding channels (kernels)
-retained_features: 2                                      # No. Retained features  1 <= R <= Features_dim
-quantiles: [0.25,0.75]                                    # Quantile for the quantile model
+n_kernels: 1                                              # No. Embedding channels (kernels) = J in the paper
+retained_features: 5                                      # No. Retained features  1 <= R <= Features_dim
+quantiles: [0.25, 0.5, 0.75]                              # Quantile for the quantile model
 n_first_mlp_neurons: 200                                  # No. of neurons in the first layer of the MLP
 n_second_mlp_neurons: 100                                 # No. of neurons in the second layer of the MLP
 features_dim: 2048                                        # No. of features in the embedding
 seed: 1221                                                # Seed for the random number generator
 n_splits: 2                                               # No. of splits for cross validation
-batch_size: 4                                             # Batch size
+batch_size: 10                                             # Batch size
 lr: 0.001                                                 # Learning rate
+l2_reg: 0.5                                               # L2 regularization
+dropout: 0.5                                              # Dropout
 num_epochs: 1                                             # No. of epochs
-checkpoint_name: "2023-02-18_23-59-58_best_models.pth"    # Name of the best model use for prediction
+n_ensemble: 2                                             # No. of models in the ensemble
+checkpoint_name: "2023-02-19_20-04-55_best_models.pth"    # Name of the best model use for prediction

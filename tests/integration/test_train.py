@@ -28,6 +28,9 @@ class TestIntegrationTrain:
             "batch_size": 4,
             "lr": 0.001,
             "num_epochs": 1,
+            'l2_reg': 0.5,
+            "dropout": 0.5,
+            "n_ensemble": 1,
         }
 
     def test_integration_train(self):
