@@ -21,6 +21,7 @@ class Chowder(nn.Module):
         n_first_mlp_neurons: int = 200,
         n_second_mlp_neurons: int = 100,
         reduce_method="minmax",
+        dropout: int=0.5,
     ) -> None:
         """
         Initialize Chowder model.
@@ -31,6 +32,8 @@ class Chowder(nn.Module):
           retained_features: the number of min/max retained values
           n_first_mlp_neurons: number of neurons in the first layer of the MLP. Defaults to 200
           n_second_mlp_neurons: number of neurons in the second layer of the MLP. Defaults to 100
+          reduce_method: the method to reduce the features. Defaults to "minmax"
+          dropout: the dropout rate. Defaults to 0.5
         """
         super().__init__()
 
@@ -58,8 +61,10 @@ class Chowder(nn.Module):
         self.mlp = nn.Sequential(
             nn.Linear(next_dim * n_kernels, n_first_mlp_neurons),
             nn.Sigmoid(),
+            nn.Dropout(dropout),
             nn.Linear(n_first_mlp_neurons, n_second_mlp_neurons),
             nn.Sigmoid(),
+            nn.Dropout(dropout),
             nn.Linear(n_second_mlp_neurons, 2),
         )
 

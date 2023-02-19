@@ -225,6 +225,7 @@ def make_model(config: Dict) -> nn.Module:
         n_first_mlp_neurons=config["n_first_mlp_neurons"],
         n_second_mlp_neurons=config["n_second_mlp_neurons"],
         reduce_method=config["reduce_method"],
+        dropout=config["dropout"],
     )
     return model
 
@@ -250,7 +251,7 @@ def make_optimizer(model: nn.Module, lr: float) -> torch.optim.Optimizer:
     Returns:
         The optimizer
     """
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=0.5)
 
     return optimizer
 
