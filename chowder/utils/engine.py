@@ -61,7 +61,7 @@ def train_one_epoch(
         # Add L2 regularization to the embedding layer as described in the paper
         l2_regularisation = torch.tensor(0.0).to(device)
         embedding_weight = model.embedding_layer.weight
-        l2_regularisation += torch.linalg.norm(embedding_weight, ord=2)
+        l2_regularisation += torch.norm(embedding_weight)
         loss += l2_reg * l2_regularisation
 
         loss.backward()

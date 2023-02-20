@@ -128,7 +128,6 @@ def k_fold_train(config: Dict) -> None:
             torch.manual_seed(j)
             logger.info(f"Fold {i+1} of {n_splits}")
             model = make_model(config=config)
-            print(model.embedding_layer.weight[0])
             trainer = Trainer(config, dataset, model)
             best_model, best_auc = trainer.train(num_epochs=num_epochs)
             best_models.append(best_model)
