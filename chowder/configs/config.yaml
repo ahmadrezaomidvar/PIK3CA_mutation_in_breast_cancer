@@ -12,7 +12,7 @@ seed: 1221                                                # Seed for the random 
 n_splits: 5                                               # No. of splits for cross validation
 batch_size: 10                                             # Batch size
 lr: 0.001                                                 # Learning rate
-l2_reg: 0.5                                               # L2 regularization
+l2_reg: 0.0                                               # L2 regularization
 dropout: 0.5                                              # Dropout
 num_epochs: 10                                             # No. of epochs
 n_ensemble: 3                                             # No. of models in the ensemble
