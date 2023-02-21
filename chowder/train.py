@@ -118,12 +118,12 @@ def k_fold_train(config: Dict) -> None:
     n_ensemble = config["n_ensemble"]
     best_models: List[Dict] = []
     best_aucs: List[float] = []
-    
+
     for j in range(n_ensemble):
         logger.info(f"Ensemble {j+1} of {n_ensemble}")
         train_validation_generator = get_train_validation_folds(
-        root=root, n_splits=n_splits
-    )
+            root=root, n_splits=n_splits
+        )
         for i, dataset in enumerate(train_validation_generator):
             torch.manual_seed(j)
             logger.info(f"Fold {i+1} of {n_splits}")
@@ -133,11 +133,13 @@ def k_fold_train(config: Dict) -> None:
             best_models.append(best_model)
             best_aucs.append(best_auc)
 
+    logger.info(f"mean auc: {sum(best_aucs)/len(best_aucs)}")
     to_save = Path(root) / "checkpoints"
     to_save.mkdir(parents=True, exist_ok=True)
     torch.save(
-        best_models,
-        to_save / f'{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}_best_models_{config["reduce_method"]}.pth',
+        {"best_models": best_models, "config": config},
+        to_save
+        / f'{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}_best_models_{config["reduce_method"]}.pth',
     )
     torch.save(
         best_aucs,

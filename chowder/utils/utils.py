@@ -41,8 +41,6 @@ class SmoothedValue(object):
         """
         Warning: does not synchronize the deque!
         """
-        # if not is_dist_avail_and_initialized():
-        #     return
         t = torch.tensor([self.count, self.total], dtype=torch.float64, device="cuda")
         dist.barrier()
         dist.all_reduce(t)
@@ -186,14 +184,6 @@ class MetricLogger(object):
         print("{} Total time: {}".format(header, total_time_str))
 
 
-# def is_dist_avail_and_initialized():
-#     if not dist.is_available():
-#         return False
-#     if not dist.is_initialized():
-#         return False
-#     return True
-
-
 def get_device() -> torch.device:
     """
     If a GPU is available, use it. Otherwise, use the CPU
@@ -251,7 +241,7 @@ def make_optimizer(model: nn.Module, lr: float) -> torch.optim.Optimizer:
     Returns:
         The optimizer
     """
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=0.5)
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=0.0)
 
     return optimizer
 
@@ -278,7 +268,12 @@ def make_dataset(
         train_x, train_y, validation_x, validation_y = generation_fold
 
         train_dataset = PIK3CAData(
-            sample_ids=train_x, targets=train_y, root=config["root"], type="train"
+            sample_ids=train_x,
+            targets=train_y,
+            root=config["root"],
+            type="train",
+            mean=config["mean"],
+            std=config["std"],
         )
         train_loader = DataLoader(
             train_dataset,
@@ -292,6 +287,8 @@ def make_dataset(
             targets=validation_y,
             root=config["root"],
             type="train",
+            mean=config["mean"],
+            std=config["std"],
         )
         # batch size is the entire validation set for validation to calculate auc score over the entire set
         validation_loader = DataLoader(
@@ -305,7 +302,12 @@ def make_dataset(
 
     elif type == "test":
         test_dataset = PIK3CAData(
-            sample_ids=None, targets=None, root=config["root"], type="test"
+            sample_ids=None,
+            targets=None,
+            root=config["root"],
+            type="test",
+            mean=config["mean"],
+            std=config["std"],
         )
         # batch size is the entire test set for testing to calculate auc score over the entire set
         test_loader = DataLoader(
