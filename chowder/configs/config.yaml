@@ -1,19 +1,21 @@
 # Configuration file for the training and prediction of the model
 
-root : "/Users/rezachi/ML/datasets/owkin/data"            # Path to the root directory of the dataset
-reduce_method: "minmax"                                   # Method for reducing the embedding, can be "minmax" or "quantile"
+root : "/data/shared/owkin_challenge"                     # Path to the root directory of the dataset
+reduce_method: "quantile"                                   # Method for reducing the embedding, can be "minmax" or "quantile"
 n_kernels: 1                                              # No. Embedding channels (kernels) = J in the paper
 retained_features: 5                                      # No. Retained features  1 <= R <= Features_dim
-quantiles: [0.25, 0.5, 0.75]                              # Quantile for the quantile model
+quantiles: [0.05, 0.1, 0.25, 0.4, 0.5, 0.6, 0.75, 0.9, 0.95]                              # Quantile for the quantile model
 n_first_mlp_neurons: 200                                  # No. of neurons in the first layer of the MLP
 n_second_mlp_neurons: 100                                 # No. of neurons in the second layer of the MLP
 features_dim: 2048                                        # No. of features in the embedding
 seed: 1221                                                # Seed for the random number generator
 n_splits: 5                                               # No. of splits for cross validation
-batch_size: 10                                             # Batch size
-lr: 0.001                                                 # Learning rate
-l2_reg: 0.0                                               # L2 regularization
+batch_size: 4                                             # Batch size
+lr: 0.00006                                               # Learning rate
+l2_reg: 0.5                                               # L2 regularization
 dropout: 0.5                                              # Dropout
-num_epochs: 10                                             # No. of epochs
-n_ensemble: 3                                             # No. of models in the ensemble
-checkpoint_name: "2023-02-19_20-04-55_best_models.pth"    # Name of the best model use for prediction
+num_epochs: 30                                            # No. of epochs
+n_ensemble: 5                                             # No. of models in the ensemble
+mean: 0.0418                                              # Mean of the dataset
+std: 0.116                                                # Standard deviation of the dataset
+checkpoint_name: "2023-02-22_03-16-37_best_models_quantile.pth"    # Name of the best model use for prediction

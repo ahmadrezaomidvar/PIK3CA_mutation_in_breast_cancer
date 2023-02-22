@@ -10,7 +10,7 @@ class TestDataset:
     def setup_method(self):
         """Setup the config for the test."""
 
-        self.root = PACKAGE_ROOT_PATH.parent / "data"
+        self.root = PACKAGE_ROOT_PATH.parent / "tests" / "fixture" / "data"
         self.config = {
             "root": str(self.root),
             "reduce_method": "minmax",
@@ -25,9 +25,11 @@ class TestDataset:
             "batch_size": 4,
             "lr": 0.001,
             "num_epochs": 1,
-            'l2_reg': 0.5,
+            "l2_reg": 0.5,
             "dropout": 0.5,
             "n_ensemble": 1,
+            "mean": 0.0418,
+            "std": 0.116,
         }
 
     def test_pik3cadata_train(self):
@@ -42,6 +44,8 @@ class TestDataset:
             targets=train_y,
             root=self.root,
             type="train",
+            mean=self.config["mean"],
+            std=self.config["std"],
         )
         _ = training_dataset.__getitem__(0)
         _ = training_dataset.__len__()
@@ -58,6 +62,8 @@ class TestDataset:
             targets=train_y,
             root=self.root,
             type="test",
+            mean=self.config["mean"],
+            std=self.config["std"],
         )
         _ = training_dataset.__getitem__(0)
         _ = training_dataset.__len__()

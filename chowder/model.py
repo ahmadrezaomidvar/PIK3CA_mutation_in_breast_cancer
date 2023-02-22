@@ -21,7 +21,7 @@ class Chowder(nn.Module):
         n_first_mlp_neurons: int = 200,
         n_second_mlp_neurons: int = 100,
         reduce_method="minmax",
-        dropout: int=0.5,
+        dropout: int = 0.5,
     ) -> None:
         """
         Initialize Chowder model.
@@ -134,30 +134,15 @@ class QuantilesModule(nn.Module):
         """Construct QuantilesModule"""
         super().__init__()
         self.quantiles = quantiles
+        self.device = (
+            torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+        )
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         """Forward implementation"""
-        output = torch.quantile(input=input, q=torch.tensor(self.quantiles), dim=2)
+        output = torch.quantile(
+            input=input, q=torch.tensor(self.quantiles).to(self.device), dim=2
+        )
         output = torch.swapaxes(output, 0, 1)
         output = torch.swapaxes(output, 1, 2)
         return output
-
-
-if __name__ == "__main__":
-    import numpy as np
-
-    # Test the model
-    input = torch.rand(30, 2048, 1000)
-    model = Chowder(
-        features_dim=2048, n_kernels=10, retained_features=10, reduce_method="minmax"
-    )
-    output = model(input)
-    print(output.shape)
-
-    # Test the model with quantiles
-    input = torch.rand(30, 2048, 1000)
-    model = Chowder(
-        features_dim=2048, n_kernels=10, quantiles=[0.1, 0.9], reduce_method="quantile"
-    )
-    output = model(input)
-    print(output.shape)

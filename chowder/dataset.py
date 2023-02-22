@@ -40,6 +40,10 @@ def get_train_validation_folds(
     train_metadata = pd.read_csv(f"{root}/supplementary_data/train_metadata.csv")
     train_outputs = pd.read_csv(f"{root}/train_output.csv")
     train_info = train_metadata.merge(train_outputs, on="Sample ID")
+    train_info_0 = train_info[train_info["Target"] == 0]
+    train_info_1 = train_info[train_info["Target"] == 1]
+    train_info_0 = train_info_0.sample(n=len(train_info_1), random_state=1221)
+    train_info = pd.concat([train_info_0, train_info_1])
     _p_ids = train_info["Patient ID"]
 
     train_info_unique = train_info.drop_duplicates(subset="Patient ID", keep="first")
@@ -72,7 +76,13 @@ class PIK3CAData(Dataset):
     """The PIK3CA dataset for training and validation."""
 
     def __init__(
-        self, sample_ids: NDArray, targets: NDArray, root: str, type: str
+        self,
+        sample_ids: NDArray,
+        targets: NDArray,
+        root: str,
+        type: str,
+        mean: float,
+        std: float,
     ) -> None:
         """
         Initialize the dataset
@@ -82,6 +92,8 @@ class PIK3CAData(Dataset):
           targets: The targets for the dataset.
           root: the path to the root directory of the dataset
           type: the type of the dataset. Either train or test
+          mean: the mean of the dataset
+          std: the standard deviation of the dataset
 
         Raises:
           ValueError: If the type is not train or test
@@ -89,6 +101,8 @@ class PIK3CAData(Dataset):
         super().__init__()
         self.type = type
         self.path_to_data = f"{root}/{self.type}_input/moco_features"
+        self.mean = mean
+        self.std = std
 
         if self.type == "train":
             self.sample_ids = sample_ids
@@ -121,6 +135,7 @@ class PIK3CAData(Dataset):
 
         x = np.load(f"{self.path_to_data}/{self.sample_ids[index]}")
         x = np.swapaxes(x[:, 3:], 0, 1)
+        # x = (x - self.mean) / self.std
         if self.type == "train":
             y = self.targets[index]
             return x, y

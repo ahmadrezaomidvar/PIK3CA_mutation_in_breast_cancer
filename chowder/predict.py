@@ -35,12 +35,16 @@ class Predictor(object):
         """
         super().__init__()
         self.config = config
-        self.device = get_device()
-        self.model = make_model(config=self.config).to(self.device)
-        self.data_loader = make_dataset(config=self.config, type="test")
         self.checkpoint_path = Path(self.config["root"]).joinpath(
             "checkpoints", self.config["checkpoint_name"]
         )
+        checkpoint = torch.load(self.checkpoint_path, map_location="cpu")
+        self.checkpoints = checkpoint["best_models"]
+        self.model_config = checkpoint["config"]
+        logger.info(f"model configuration: {self.model_config}")
+        self.device = get_device()
+        self.model = make_model(config=self.model_config).to(self.device)
+        self.data_loader = make_dataset(config=self.config, type="test")
 
     def predict(self, root: str) -> pd.DataFrame:
         """
@@ -54,9 +58,8 @@ class Predictor(object):
 
         """
 
-        checkpoints = torch.load(self.checkpoint_path, map_location="cpu")
         pred = 0
-        for checkpoint in tqdm(checkpoints):
+        for checkpoint in tqdm(self.checkpoints):
             self.model.load_state_dict(checkpoint["model"])
 
             with torch.no_grad():
@@ -71,7 +74,7 @@ class Predictor(object):
                 # as the entire dataset is loaded into memory for prediction, we can calculate the pred TODO add support for large datasets
                 pred += output_proba[:, 1].cpu().numpy()
 
-        pred = pred / len(checkpoints)
+        pred = pred / len(self.checkpoints)
 
         # as the entire dataset is loaded into memory for prediction, we can use test_id TODO add support for large datasets
         submission = pd.DataFrame({"Sample ID": test_id, "Target": pred}).sort_values(
